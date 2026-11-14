@@ -26,4 +26,29 @@ if (!columns.some(column => column.name === 'icon')) {
   db.exec('ALTER TABLE locations ADD COLUMN icon TEXT');
 }
 
+// Categories: optional labels to group items by type
+db.exec(`
+  CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE CHECK(length(trim(name)) BETWEEN 1 AND 50),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Items: each item is stored in exactly one location
+db.exec(`
+  CREATE TABLE IF NOT EXISTS items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL CHECK(length(trim(name)) BETWEEN 1 AND 100),
+    description TEXT,
+    quantity INTEGER NOT NULL DEFAULT 1 CHECK(quantity >= 1),
+    location_id INTEGER NOT NULL REFERENCES locations(id) ON DELETE RESTRICT,
+    category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_items_location_id ON items(location_id);
+  CREATE INDEX IF NOT EXISTS idx_items_category_id ON items(category_id);
+  CREATE INDEX IF NOT EXISTS idx_items_name ON items(name);
+`);
+
 module.exports = db;
