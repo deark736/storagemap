@@ -1,3 +1,4 @@
+import * as api from '../api/locations';
 import React, { useState } from 'react';
 
 function findLocation(locations, locationId) {
@@ -82,7 +83,8 @@ function createId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function InventoryView({ inventory, setInventory }) {
+function InventoryView({ inventory, setInventory, refreshLocations }) {
+  const [actionError, setActionError] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedItemId, setHighlightedItemId] = useState(null);
@@ -121,72 +123,58 @@ function InventoryView({ inventory, setInventory }) {
     ))
     : [];
 
-  function addLocation(parentId) {
+  async function addLocation(parentId) {
     const name = newLocationName.trim();
-    if (!name) {
-      return;
+    if (!name) return;
+    try {
+      await api.createLocation(name, parentId === null ? null : Number(parentId));
+      await refreshLocations();
+      setNewLocationName('');
+      setIsAddingLocation(false);
+      setActionError('');
+    } catch (e) {
+      setActionError(e.message);
     }
-
-    const newLocation = {
-      id: createId(),
-      name,
-      type: 'location',
-      children: []
-    };
-
-    if (parentId === null) {
-      setInventory(currentInventory => [...currentInventory, newLocation]);
-    } else {
-      setInventory(currentInventory => updateLocation(
-        currentInventory,
-        parentId,
-        location => ({
-          ...location,
-          children: [...(location.children || []), newLocation]
-        })
-      ));
-    }
-
-    setNewLocationName('');
-    setIsAddingLocation(false);
   }
 
-  function saveLocationName() {
+  async function saveLocationName() {
     const name = newName.trim();
-    if (!name || selectedLocationId === null) {
-      return;
+    if (!name || selectedLocationId === null) return;
+    try {
+      await api.updateLocation(Number(selectedLocationId), { name });
+      await refreshLocations();
+      setIsEditing(false);
+      setActionError('');
+    } catch (e) {
+      setActionError(e.message);
     }
-
-    setInventory(currentInventory => updateLocation(
-      currentInventory,
-      selectedLocationId,
-      location => ({ ...location, name })
-    ));
-    setIsEditing(false);
   }
 
-  function moveSelectedLocation() {
-    if (!selectedLocation || targetLocationId === '') {
-      return;
+  async function moveSelectedLocation() {
+    if (!selectedLocation || targetLocationId === '') return;
+    const parentId = targetLocationId === 'root' ? null : Number(targetLocationId);
+    try {
+      await api.updateLocation(Number(selectedLocation.id), { parentId });
+      await refreshLocations();
+      setMovingLocation(false);
+      setTargetLocationId('');
+      setActionError('');
+    } catch (e) {
+      setActionError(e.message);
     }
-
-    const destinationId = targetLocationId === 'root' ? null : targetLocationId;
-    const movedLocation = selectedLocation;
-    setInventory(currentInventory => {
-      const withoutLocation = removeLocation(currentInventory, selectedLocation.id);
-      if (destinationId === null) {
-        return [...withoutLocation, movedLocation];
-      }
-
-      return updateLocation(withoutLocation, destinationId, destination => ({
-        ...destination,
-        children: [...(destination.children || []), movedLocation]
-      }));
-    });
-    setMovingLocation(false);
-    setTargetLocationId('');
   }
 
+  async function deleteSelectedLocation() {
+    if (!window.confirm(`Delete "${selectedLocation.name}"?`)) return;
+    try {
+      await api.deleteLocation(Number(selectedLocation.id));
+      setSelectedLocationId(null);
+      await refreshLocations();
+      setActionError('');
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
   function addItem() {
     const name = newItemName.trim();
     if (!name || selectedLocationId === null) {
@@ -328,6 +316,8 @@ function InventoryView({ inventory, setInventory }) {
         </div>
       </div>
       <div style={{ display: 'flex', gap: '20px' }}>
+        {actionError && <p role="alert" style={{ color: '#b00020' }}>{actionError}</p>}
+        <div style={{ display: 'flex', gap: '20px' }}></div>
         <div style={{ flex: 1, background: '#e0e0e0', padding: '15px' }}>
           <p style={{ fontWeight: 'bold' }}>All Locations</p>
           <button
@@ -437,10 +427,7 @@ function InventoryView({ inventory, setInventory }) {
                       setMovingLocation(true);
                       setTargetLocationId('');
                     }}>Move location</button>
-                    <button type="button" style={{ background: '#ffcccc', marginRight: '5px' }} onClick={() => {
-                      setInventory(currentInventory => removeLocation(currentInventory, selectedLocation.id));
-                      setSelectedLocationId(null);
-                    }}>Delete</button>
+                    <button type="button" style={{ background: '#ffcccc', marginRight: '5px' }} onClick={deleteSelectedLocation}>Delete</button>
                   </div>
                 </>
               )}
@@ -603,3 +590,4 @@ function InventoryView({ inventory, setInventory }) {
 }
 
 export default InventoryView;
+
