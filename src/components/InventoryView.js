@@ -49,15 +49,6 @@ function updateLocation(locations, locationId, update) {
   });
 }
 
-function removeLocation(locations, locationId) {
-  return locations
-    .filter(location => location.id !== locationId)
-    .map(location => ({
-      ...location,
-      children: removeLocation(location.children || [], locationId)
-    }));
-}
-
 function flattenLocations(locations, depth = 0) {
   return locations.flatMap(location => [
     { location, depth },
@@ -315,9 +306,10 @@ function InventoryView({ inventory, setInventory, refreshLocations }) {
           )}
         </div>
       </div>
+      <div style={{ minHeight: '24px', marginBottom: '10px' }}>
+        {actionError && <p role="alert" style={{ color: '#b00020', margin: 0 }}>{actionError}</p>}
+      </div>
       <div style={{ display: 'flex', gap: '20px' }}>
-        {actionError && <p role="alert" style={{ color: '#b00020' }}>{actionError}</p>}
-        <div style={{ display: 'flex', gap: '20px' }}></div>
         <div style={{ flex: 1, background: '#e0e0e0', padding: '15px' }}>
           <p style={{ fontWeight: 'bold' }}>All Locations</p>
           <button

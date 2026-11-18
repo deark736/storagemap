@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import InventoryView from './components/InventoryView';
 
-// TEST ONLY: turns the flat list from the API into the nested tree InventoryView uses.
+// Turns the flat list from the API into the nested tree InventoryView uses.
 function buildTree(flat) {
   const nodes = new Map(flat.map(l => [l.id, { id: String(l.id), name: l.name, type: 'location', children: [], items: [] }]));
   const roots = [];
@@ -18,15 +18,25 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentView, setCurrentView] = useState('home');
   const [inventory, setInventory] = useState([]);
+  const [loadError, setLoadError] = useState('');
 
-  // TEST ONLY: loads the locations from the API.
+  // Loads the locations from the API. It throws if the request fails,
+  // so the caller can show the error message.
   const refreshLocations = useCallback(async () => {
-    const res = await fetch('/api/locations');
+    let res;
+    try {
+      res = await fetch('/api/locations');
+    } catch {
+      throw new Error('Could not reach the server');
+    }
+    if (!res.ok) throw new Error('Could not load locations');
     setInventory(buildTree(await res.json()));
   }, []);
 
   useEffect(() => {
-    refreshLocations();
+    refreshLocations()
+      .then(() => setLoadError(''))
+      .catch(e => setLoadError(e.message));
   }, [refreshLocations]);
 
   return (
@@ -64,11 +74,16 @@ function App() {
         )}
 
         {currentView === 'inventory' && (
-          <InventoryView
-            inventory={inventory}
-            setInventory={setInventory}
-            refreshLocations={refreshLocations}
-          />
+          <>
+            {loadError && (
+              <p role="alert" style={{ color: '#b00020', margin: '0 0 10px' }}>{loadError}</p>
+            )}
+            <InventoryView
+              inventory={inventory}
+              setInventory={setInventory}
+              refreshLocations={refreshLocations}
+            />
+          </>
         )}
 
         {currentView === 'help' && <h1>Help View</h1>}
