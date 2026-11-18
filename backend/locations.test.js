@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const Database = require('better-sqlite3');
 const createLocationRouter = require('./locations');
 const express = require('express');
+const { initializeDatabase } = require('./database');
+const createItemRouter = require('./items');
 
 // In-memory SQLite makes tests independent of the project's actual data.
 test('location API creates and retrieves nested locations', async () => {
@@ -120,6 +122,107 @@ test('location API edits and deletes locations safely', async () => {
 
     assert.equal(
       (await request(`/${garage.id}`, 'GET')).status,
+      404
+    );
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    db.close();
+  }
+});
+
+test('location API protects locations containing items', async () => {
+  const db = initializeDatabase(new Database(':memory:'));
+
+  const app = express();
+  app.use(express.json());
+  app.use('/api/locations', createLocationRouter(db));
+  app.use('/api/items', createItemRouter(db));
+
+  const server = app.listen(0);
+
+  try {
+    const base =
+      `http://127.0.0.1:${server.address().port}/api`;
+
+    const request = (path, method = 'GET', body) =>
+      fetch(`${base}${path}`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        ...(body !== undefined
+          ? { body: JSON.stringify(body) }
+          : {})
+      });
+
+    const locationResponse = await request(
+      '/locations',
+      'POST',
+      { name: 'Garage' }
+    );
+
+    assert.equal(locationResponse.status, 201);
+
+    const garage = await locationResponse.json();
+
+    const itemResponse = await request(
+      '/items',
+      'POST',
+      {
+        name: 'Hammer',
+        locationId: garage.id
+      }
+    );
+
+    assert.equal(itemResponse.status, 201);
+
+    const hammer = await itemResponse.json();
+
+    const restricted = await request(
+      `/locations/${garage.id}`,
+      'DELETE'
+    );
+
+    assert.equal(restricted.status, 409);
+
+    assert.equal(
+      (await restricted.json()).error,
+      'Location contains child locations or items'
+    );
+
+    const existingLocation = await request(
+      `/locations/${garage.id}`
+    );
+
+    assert.equal(existingLocation.status, 200);
+    assert.deepEqual(await existingLocation.json(), garage);
+
+    const existingItem = await request(
+      `/items/${hammer.id}`
+    );
+
+    assert.equal(existingItem.status, 200);
+    assert.deepEqual(await existingItem.json(), hammer);
+
+    const deletedItem = await request(
+      `/items/${hammer.id}`,
+      'DELETE'
+    );
+
+    assert.equal(deletedItem.status, 204);
+
+    const deletedLocation = await request(
+      `/locations/${garage.id}`,
+      'DELETE'
+    );
+
+    assert.equal(deletedLocation.status, 204);
+
+    assert.equal(
+      (await request(`/locations/${garage.id}`)).status,
+      404
+    );
+
+    assert.equal(
+      (await request(`/items/${hammer.id}`)).status,
       404
     );
   } finally {
