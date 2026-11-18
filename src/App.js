@@ -1,11 +1,43 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import InventoryView from './components/InventoryView';
+
+// Turns the flat list from the API into the nested tree InventoryView uses.
+function buildTree(flat) {
+  const nodes = new Map(flat.map(l => [l.id, { id: String(l.id), name: l.name, type: 'location', children: [], items: [] }]));
+  const roots = [];
+  flat.forEach(l => {
+    const node = nodes.get(l.id);
+    if (l.parentId === null) roots.push(node);
+    else nodes.get(l.parentId)?.children.push(node);
+  });
+  return roots;
+}
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentView, setCurrentView] = useState('home');
   const [inventory, setInventory] = useState([]);
+  const [loadError, setLoadError] = useState('');
+
+  // Loads the locations from the API. It throws if the request fails,
+  // so the caller can show the error message.
+  const refreshLocations = useCallback(async () => {
+    let res;
+    try {
+      res = await fetch('/api/locations');
+    } catch {
+      throw new Error('Could not reach the server');
+    }
+    if (!res.ok) throw new Error('Could not load locations');
+    setInventory(buildTree(await res.json()));
+  }, []);
+
+  useEffect(() => {
+    refreshLocations()
+      .then(() => setLoadError(''))
+      .catch(e => setLoadError(e.message));
+  }, [refreshLocations]);
 
   return (
     <div>
@@ -22,7 +54,7 @@ function App() {
                 <p>Are you worried about not remembering where you put your favorite watch? Or do you need your tools to fix a bathroom pipe right now? This app can help you quickly find these items before you get stressed out.</p>
               </div>
             </div>
-            
+
             <h2 style={{ textAlign: 'center', marginTop: '40px' }}>Start Now</h2>
             <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center', marginTop: '20px' }}>
               <div>
@@ -42,7 +74,16 @@ function App() {
         )}
 
         {currentView === 'inventory' && (
-          <InventoryView inventory={inventory} setInventory={setInventory} />
+          <>
+            {loadError && (
+              <p role="alert" style={{ color: '#b00020', margin: '0 0 10px' }}>{loadError}</p>
+            )}
+            <InventoryView
+              inventory={inventory}
+              setInventory={setInventory}
+              refreshLocations={refreshLocations}
+            />
+          </>
         )}
 
         {currentView === 'help' && <h1>Help View</h1>}
