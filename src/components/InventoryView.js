@@ -1,4 +1,5 @@
 import * as api from '../api/locations';
+import * as itemsApi from '../api/items';
 import React, { useState } from 'react';
 
 function findLocation(locations, locationId) {
@@ -32,23 +33,6 @@ function findLocationPath(locations, locationId, path = []) {
   return null;
 }
 
-function updateLocation(locations, locationId, update) {
-  return locations.map(location => {
-    if (location.id === locationId) {
-      return update(location);
-    }
-
-    if (location.children?.length) {
-      return {
-        ...location,
-        children: updateLocation(location.children, locationId, update)
-      };
-    }
-
-    return location;
-  });
-}
-
 function flattenLocations(locations, depth = 0) {
   return locations.flatMap(location => [
     { location, depth },
@@ -70,11 +54,7 @@ function collectLocationIds(location) {
   return [location.id, ...(location.children || []).flatMap(collectLocationIds)];
 }
 
-function createId() {
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function InventoryView({ inventory, setInventory, refreshLocations }) {
+function InventoryView({ inventory, refreshLocations }) {
   const [actionError, setActionError] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -166,59 +146,60 @@ function InventoryView({ inventory, setInventory, refreshLocations }) {
       setActionError(e.message);
     }
   }
-  function addItem() {
+  async function addItem() {
     const name = newItemName.trim();
-    if (!name || selectedLocationId === null) {
-      return;
+    if (!name || selectedLocationId === null) return;
+
+    try {
+      await itemsApi.createItem(name, Number(selectedLocationId));
+      await refreshLocations();
+      setNewItemName('');
+      setIsAddingItem(false);
+      setActionError('');
+    } catch (e) {
+      setActionError(e.message);
     }
-
-    setInventory(currentInventory => updateLocation(
-      currentInventory,
-      selectedLocationId,
-      location => ({
-        ...location,
-        items: [...(location.items || []), { id: createId(), name }]
-      })
-    ));
-    setNewItemName('');
-    setIsAddingItem(false);
   }
 
-  function updateItem(itemId, update) {
-    setInventory(currentInventory => updateLocation(
-      currentInventory,
-      selectedLocationId,
-      location => ({
-        ...location,
-        items: (location.items || []).map(item => (
-          item.id === itemId ? update(item) : item
-        ))
-      })
-    ));
+  async function saveItemName(itemId) {
+    const name = editedItemName.trim();
+    if (!name) return;
+    try {
+      await itemsApi.updateItem(Number(itemId), { name });
+      await refreshLocations();
+      setEditingItemId(null);
+      setActionError('');
+    } catch (e) {
+      setActionError(e.message);
+    }
   }
 
-  function moveItem(item) {
+  async function handleDeleteItem(itemId) {
+    try {
+      await itemsApi.deleteItem(Number(itemId));
+      await refreshLocations();
+      setActionError('');
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  async function moveItem(item) {
     if (!selectedLocation || targetLocationId === '') {
       return;
     }
 
-    const destinationId = targetLocationId;
-    setInventory(currentInventory => {
-      const withoutItem = updateLocation(
-        currentInventory,
-        selectedLocation.id,
-        location => ({
-          ...location,
-          items: (location.items || []).filter(existingItem => existingItem.id !== item.id)
-        })
-      );
-      return updateLocation(withoutItem, destinationId, destination => ({
-        ...destination,
-        items: [...(destination.items || []), item]
-      }));
-    });
-    setMovingItemId(null);
-    setTargetLocationId('');
+    try {
+      await itemsApi.updateItem(Number(item.id), {
+        locationId: Number(targetLocationId)
+      });
+      await refreshLocations();
+      setMovingItemId(null);
+      setTargetLocationId('');
+      setActionError('');
+    } catch (e) {
+      setActionError(e.message);
+    }
   }
 
   function renderLocationTree(treeLocations, depth = 0) {
@@ -509,15 +490,7 @@ function InventoryView({ inventory, setInventory, refreshLocations }) {
                               onChange={event => setEditedItemName(event.target.value)}
                               style={{ padding: '2px', marginRight: '5px' }}
                             />
-                            <button type="button" onClick={() => {
-                              if (editedItemName.trim()) {
-                                updateItem(item.id, currentItem => ({
-                                  ...currentItem,
-                                  name: editedItemName.trim()
-                                }));
-                                setEditingItemId(null);
-                              }
-                            }} style={{ marginRight: '3px', fontSize: '10px' }}>Save</button>
+                            <button type="button" onClick={() => saveItemName(item.id)} style={{ marginRight: '3px', fontSize: '10px' }}>Save</button>
                             <button type="button" onClick={() => setEditingItemId(null)} style={{ fontSize: '10px' }}>Cancel</button>
                           </>
                         ) : (
@@ -552,16 +525,13 @@ function InventoryView({ inventory, setInventory, refreshLocations }) {
                                 setEditingItemId(null);
                               }}>Move</button>
                             )}
-                            <button type="button" style={{ marginLeft: '5px', fontSize: '10px', background: '#ffcccc' }} onClick={() => {
-                              setInventory(currentInventory => updateLocation(
-                                currentInventory,
-                                selectedLocation.id,
-                                location => ({
-                                  ...location,
-                                  items: (location.items || []).filter(existingItem => existingItem.id !== item.id)
-                                })
-                              ));
-                            }}>Delete</button>
+                            <button
+                              type="button"
+                              style={{ marginLeft: '5px', fontSize: '10px', background: '#ffcccc' }}
+                              onClick={() => handleDeleteItem(item.id)}
+                            >
+                              Delete
+                            </button>
                           </>
                         )}
                       </li>
@@ -582,4 +552,3 @@ function InventoryView({ inventory, setInventory, refreshLocations }) {
 }
 
 export default InventoryView;
-

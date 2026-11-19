@@ -391,6 +391,41 @@ test('item API clears optional item fields', async () => {
   });
 });
 
+test('item API moves an item to another location', async () => {
+  await withItemApi(async ({
+    request,
+    garageId,
+    kitchenId
+  }) => {
+    const created = await request('/', 'POST', {
+      name: 'Hammer',
+      locationId: garageId
+    });
+
+    assert.equal(created.status, 201);
+    const item = await created.json();
+
+    const moved = await request(`/${item.id}`, 'PATCH', {
+      locationId: kitchenId
+    });
+
+    assert.equal(moved.status, 200);
+    assert.deepEqual(await moved.json(), {
+      ...item,
+      locationId: kitchenId
+    });
+
+    const garageItems = await request(`/?locationId=${garageId}`);
+    const kitchenItems = await request(`/?locationId=${kitchenId}`);
+
+    assert.deepEqual(await garageItems.json(), []);
+    assert.deepEqual(await kitchenItems.json(), [{
+      ...item,
+      locationId: kitchenId
+    }]);
+  });
+});
+
 test('item API rejects invalid updates without modifying items', async () => {
   await withItemApi(async ({
     request,
@@ -425,7 +460,9 @@ test('item API rejects invalid updates without modifying items', async () => {
       { categoryId: -1 },
       { categoryId: 1.5 },
       { categoryId: '1' },
-      { locationId: kitchenId },
+      { locationId: 0 },
+      { locationId: 1.5 },
+      { locationId: '1' },
       { id: 999 },
       { createdAt: '2026-01-01' },
       { unexpectedField: true },
@@ -452,6 +489,12 @@ test('item API rejects invalid updates without modifying items', async () => {
     });
 
     assert.equal(missingCategory.status, 404);
+
+    const missingLocation = await request(path, 'PATCH', {
+      locationId: kitchenId + 99999
+    });
+
+    assert.equal(missingLocation.status, 404);
 
     const retrieved = await request(path);
 
