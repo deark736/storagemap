@@ -220,7 +220,8 @@ function createItemRouter(db) {
       'name',
       'description',
       'quantity',
-      'categoryId'
+      'categoryId',
+      'locationId'
     ];
 
     const keys = Object.keys(body);
@@ -236,7 +237,8 @@ function createItemRouter(db) {
       name,
       description,
       quantity,
-      categoryId
+      categoryId,
+      locationId
     } = item;
 
     if (Object.hasOwn(body, 'name')) {
@@ -292,18 +294,36 @@ function createItemRouter(db) {
       }
     }
 
+    if (Object.hasOwn(body, 'locationId')) {
+      locationId = body.locationId;
+
+      if (!Number.isSafeInteger(locationId) || locationId < 1) {
+        return res.status(400).json({
+          error: 'Invalid locationId'
+        });
+      }
+
+      if (!selectLocation.get(locationId)) {
+        return res.status(404).json({
+          error: 'Location not found'
+        });
+      }
+    }
+
     db.prepare(`
       UPDATE items
       SET name = ?,
           description = ?,
           quantity = ?,
-          category_id = ?
+          category_id = ?,
+          location_id = ?
       WHERE id = ?
     `).run(
       name,
       description,
       quantity,
       categoryId,
+      locationId,
       id
     );
 

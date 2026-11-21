@@ -1,16 +1,38 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import InventoryView from './components/InventoryView';
+import * as itemsApi from './api/items';
 
 // Turns the flat list from the API into the nested tree InventoryView uses.
-function buildTree(flat) {
-  const nodes = new Map(flat.map(l => [l.id, { id: String(l.id), name: l.name, type: 'location', children: [], items: [] }]));
+function buildTree(locations, items = []) {
+  const nodes = new Map(
+    locations.map(l => [
+      l.id,
+      { id: String(l.id), name: l.name, type: 'location', children: [], items: [] }
+    ])
+  );
   const roots = [];
-  flat.forEach(l => {
+
+  locations.forEach(l => {
     const node = nodes.get(l.id);
     if (l.parentId === null) roots.push(node);
     else nodes.get(l.parentId)?.children.push(node);
   });
+
+  items.forEach(item => {
+    const targetNode = nodes.get(item.locationId);
+    if (targetNode) {
+      targetNode.items.push({
+        id: String(item.id),
+        name: item.name,
+        description: item.description,
+        quantity: item.quantity,
+        locationId: item.locationId,
+        categoryId: item.categoryId
+      });
+    }
+  });
+
   return roots;
 }
 
@@ -23,21 +45,29 @@ function App() {
   // Loads the locations from the API. It throws if the request fails,
   // so the caller can show the error message.
   const refreshLocations = useCallback(async () => {
-    let res;
+    let locationsResponse;
+    let itemsData;
     try {
-      res = await fetch('/api/locations');
+      [locationsResponse, itemsData] = await Promise.all([
+        fetch('/api/locations'),
+        itemsApi.fetchItems()
+      ]);
     } catch {
       throw new Error('Could not reach the server');
     }
-    if (!res.ok) throw new Error('Could not load locations');
-    setInventory(buildTree(await res.json()));
+
+    if (!locationsResponse.ok) throw new Error('Could not load locations');
+
+    const locationsData = await locationsResponse.json();
+    setInventory(buildTree(locationsData, itemsData));
+    setLoadError('');
   }, []);
 
   useEffect(() => {
-    refreshLocations()
-      .then(() => setLoadError(''))
-      .catch(e => setLoadError(e.message));
-  }, [refreshLocations]);
+    if (currentView !== 'inventory') return;
+
+    refreshLocations().catch(error => setLoadError(error.message));
+  }, [currentView, refreshLocations]);
 
   return (
     <div>
@@ -80,7 +110,6 @@ function App() {
             )}
             <InventoryView
               inventory={inventory}
-              setInventory={setInventory}
               refreshLocations={refreshLocations}
             />
           </>

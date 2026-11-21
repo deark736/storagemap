@@ -1,12 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import InventoryView from './InventoryView';
 import * as api from '../api/locations';
+import * as itemsApi from '../api/items';
 
 jest.mock('../api/locations');
+jest.mock('../api/items');
 
 test('creates nested locations and moves a location with its descendants and items', async () => {
   let inventory = [];
   let nextId = 1;
+  let nextItemId = 1000;
 
   const setInventory = update => {
     inventory = typeof update === 'function' ? update(inventory) : update;
@@ -42,6 +45,26 @@ test('creates nested locations and moves a location with its descendants and ite
     return { extracted, remaining };
   };
 
+  const findNode = (nodes, id) => {
+    for (const node of nodes) {
+      if (String(node.id) === String(id)) return node;
+      const child = findNode(node.children || [], id);
+      if (child) return child;
+    }
+    return null;
+  };
+
+  const findItemLocation = (nodes, id) => {
+    for (const node of nodes) {
+      if ((node.items || []).some(item => String(item.id) === String(id))) {
+        return node;
+      }
+      const child = findItemLocation(node.children || [], id);
+      if (child) return child;
+    }
+    return null;
+  };
+
   api.createLocation.mockImplementation(async (name, parentId = null) => {
     const newLoc = { id: nextId++, name, parentId, children: [], items: [] };
     inventory = insertNode(inventory, parentId, newLoc);
@@ -57,6 +80,40 @@ test('creates nested locations and moves a location with its descendants and ite
       }
     }
     return { id, ...updates };
+  });
+
+  itemsApi.createItem.mockImplementation(async (name, locationId) => {
+    const item = {
+      id: String(nextItemId++),
+      name,
+      locationId,
+      description: null,
+      quantity: 1,
+      categoryId: null
+    };
+    const location = findNode(inventory, locationId);
+    location.items = [...(location.items || []), item];
+    return item;
+  });
+
+  itemsApi.updateItem.mockImplementation(async (id, updates) => {
+    const oldLocation = findItemLocation(inventory, id);
+    const item = oldLocation.items.find(existing => String(existing.id) === String(id));
+    if (Object.hasOwn(updates, 'locationId')) {
+      oldLocation.items = oldLocation.items.filter(
+        existing => String(existing.id) !== String(id)
+      );
+      const newLocation = findNode(inventory, updates.locationId);
+      newLocation.items = [...(newLocation.items || []), item];
+      item.locationId = updates.locationId;
+    }
+    Object.assign(item, updates);
+    return item;
+  });
+
+  itemsApi.deleteItem.mockImplementation(async id => {
+    const location = findItemLocation(inventory, id);
+    location.items = location.items.filter(item => String(item.id) !== String(id));
   });
 
   let rerenderFn;
@@ -130,6 +187,27 @@ test('creates nested locations and moves a location with its descendants and ite
   expect(room.children).toEqual([]);
   expect(garage.children[0].name).toBe('Shelf 1');
   expect(garage.children[0].children[0].items[0].name).toBe('Watch');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Move', exact: true }));
+  fireEvent.change(screen.getByLabelText('Move Watch to location'), {
+    target: { value: String(room.id) }
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+  await waitFor(() => {
+    expect(itemsApi.updateItem).toHaveBeenCalledWith(1000, { locationId: Number(room.id) });
+  });
+
+  fireEvent.click(screen.getAllByRole('button', { name: 'Room 1' })[0]);
+  expect(screen.getByText('Watch')).toBeInTheDocument();
+  fireEvent.click(screen.getAllByRole('button', { name: 'Rename' })[1]);
+  fireEvent.change(screen.getByDisplayValue('Watch'), { target: { value: 'Wristwatch' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  await waitFor(() => expect(screen.getByText('Wristwatch')).toBeInTheDocument());
+  expect(itemsApi.updateItem).toHaveBeenCalledWith(1000, { name: 'Wristwatch' });
+
+  fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[1]);
+  await waitFor(() => expect(itemsApi.deleteItem).toHaveBeenCalledWith(1000));
+  expect(screen.queryByText('Wristwatch')).not.toBeInTheDocument();
 
   fireEvent.click(screen.getAllByRole('button', { name: 'Room 1' })[0]);
   fireEvent.click(screen.getByRole('button', { name: 'Move location' }));
