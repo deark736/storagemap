@@ -180,6 +180,99 @@ test('item API filters items by storage location', async () => {
   });
 });
 
+
+test('item API searches item names case-insensitively', async () => {
+  await withItemApi(async ({
+    request,
+    garageId,
+    kitchenId
+  }) => {
+    const firstResponse = await request('/', 'POST', {
+      name: 'Hammer',
+      locationId: garageId
+    });
+
+    assert.equal(firstResponse.status, 201);
+    const hammer = await firstResponse.json();
+
+    const secondResponse = await request('/', 'POST', {
+      name: 'Small Hammer',
+      locationId: kitchenId
+    });
+
+    assert.equal(secondResponse.status, 201);
+    const smallHammer = await secondResponse.json();
+
+    const thirdResponse = await request('/', 'POST', {
+      name: 'Screwdriver',
+      locationId: garageId
+    });
+
+    assert.equal(thirdResponse.status, 201);
+
+    const search = await request('/?search=HAMMER');
+
+    assert.equal(search.status, 200);
+    assert.deepEqual(
+      await search.json(),
+      [hammer, smallHammer]
+    );
+
+    const partialSearch = await request('/?search=amm');
+
+    assert.equal(partialSearch.status, 200);
+    assert.deepEqual(
+      await partialSearch.json(),
+      [hammer, smallHammer]
+    );
+
+    const filteredSearch = await request(
+      `/?search=hammer&locationId=${garageId}`
+    );
+
+    assert.equal(filteredSearch.status, 200);
+    assert.deepEqual(await filteredSearch.json(), [hammer]);
+
+    const noMatches = await request('/?search=nonexistent');
+
+    assert.equal(noMatches.status, 200);
+    assert.deepEqual(await noMatches.json(), []);
+
+    const emptySearch = await request('/?search=%20%20');
+
+    assert.equal(emptySearch.status, 200);
+    assert.equal((await emptySearch.json()).length, 3);
+  });
+});
+
+
+
+test('item API rejects invalid location filters combined with search', async () => {
+  await withItemApi(async ({ request, garageId }) => {
+    const invalidLocations = [
+      '/?search=hammer&locationId=abc',
+      '/?search=hammer&locationId=-1',
+      '/?search=hammer&locationId=1.5',
+      '/?search=hammer&locationId=0'
+    ];
+
+    for (const path of invalidLocations) {
+      const response = await request(path);
+
+      assert.equal(response.status, 400);
+      assert.deepEqual(await response.json(), {
+        error: 'Invalid locationId'
+      });
+    }
+
+    const validResponse = await request(
+      `/?search=hammer&locationId=${garageId}`
+    );
+
+    assert.equal(validResponse.status, 200);
+  });
+});
+
 test('item API rejects invalid creation requests', async () => {
   await withItemApi(async ({ request, garageId }) => {
     const valid = {
