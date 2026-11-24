@@ -28,14 +28,20 @@ function createItemRouter(db) {
     'SELECT id FROM categories WHERE id = ?'
   );
 
+
   router.get('/', (req, res) => {
-    const { locationId } = req.query;
+    const { locationId, search } = req.query;
+    const conditions = [];
+    const params = [];
 
     if (locationId !== undefined) {
       const id = Number(locationId);
 
-      if (typeof locationId !== 'string' ||
-          !Number.isSafeInteger(id) || id < 1) {
+      if (
+        typeof locationId !== 'string' ||
+        !Number.isSafeInteger(id) ||
+        id < 1
+      ) {
         return res.status(400).json({
           error: 'Invalid locationId'
         });
@@ -47,21 +53,35 @@ function createItemRouter(db) {
         });
       }
 
-      const items = db.prepare(`
-        SELECT ${fields}
-        FROM items
-        WHERE location_id = ?
-        ORDER BY id
-      `).all(id);
-
-      return res.json(items);
+      conditions.push('location_id = ?');
+      params.push(id);
     }
+
+    if (search !== undefined) {
+      if (typeof search !== 'string') {
+        return res.status(400).json({
+          error: 'Invalid search'
+        });
+      }
+
+      const query = search.trim();
+
+      if (query) {
+        conditions.push('instr(lower(name), lower(?)) > 0');
+        params.push(query);
+      }
+    }
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(' AND ')}`
+      : '';
 
     const items = db.prepare(`
       SELECT ${fields}
       FROM items
+      ${whereClause}
       ORDER BY id
-    `).all();
+    `).all(...params);
 
     res.json(items);
   });
