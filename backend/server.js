@@ -3,6 +3,7 @@ const express = require('express');
 const db = require('./database');
 const createLocationRouter = require('./locations');
 const createItemRouter = require('./items');
+const createAuthRouter = require('./auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +16,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/locations', createLocationRouter(db));
 app.use('/api/items', createItemRouter(db));
+app.use('/api/auth', createAuthRouter(db));
 
 // Export the app for testing without opening a listening port.
 if (require.main === module) {
