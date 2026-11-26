@@ -39,7 +39,7 @@ function ItemSearchBar({ inventory, locationId = null, onSelectResult }) {
     return () => {
       cancelled = true;
     };
-  }, [trimmed, locationId]);
+  }, [trimmed, locationId, inventory]);
 
   return (
     <div style={{ width: '60%', margin: '0 auto', textAlign: 'left' }}>
