@@ -1,0 +1,56 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 310">
+  <title>Organized home storage</title>
+
+  <!-- Background -->
+  <rect x="10" y="10" width="460" height="290" rx="24" fill="#E2F1ED"/>
+  <circle cx="390" cy="65" r="30" fill="#C5E4DC"/>
+  <ellipse cx="235" cy="277" rx="181" ry="9" fill="#C5DDD6"/>
+
+  <!-- Shelving frame -->
+  <rect x="84" y="36" width="14" height="237" rx="4" fill="#64748B"/>
+  <rect x="321" y="36" width="14" height="237" rx="4" fill="#64748B"/>
+
+  <!-- Shelves -->
+  <g fill="#475569">
+    <rect x="78" y="112" width="263" height="11" rx="3"/>
+    <rect x="78" y="187" width="263" height="11" rx="3"/>
+    <rect x="78" y="262" width="263" height="11" rx="3"/>
+  </g>
+
+  <!-- Top shelf storage boxes -->
+  <rect x="108" y="57" width="94" height="55" rx="5" fill="#0F766E"/>
+  <rect x="104" y="53" width="102" height="12" rx="3" fill="#14978B"/>
+  <rect x="139" y="77" width="32" height="12" rx="3" fill="#F8FAFC"/>
+
+  <rect x="217" y="71" width="90" height="41" rx="5" fill="#D8B98A"/>
+  <rect x="213" y="66" width="98" height="12" rx="3" fill="#E9CDA4"/>
+  <rect x="245" y="86" width="32" height="11" rx="3" fill="#FFF8EB"/>
+
+  <!-- Middle shelf storage boxes -->
+  <rect x="110" y="133" width="72" height="54" rx="5" fill="#FFFFFF" stroke="#B5D6CE" stroke-width="2"/>
+  <rect x="105" y="128" width="82" height="12" rx="3" fill="#B5D6CE"/>
+  <rect x="133" y="151" width="26" height="9" rx="3" fill="#94A3B8"/>
+
+  <rect x="198" y="143" width="108" height="44" rx="5" fill="#527C74"/>
+  <rect x="194" y="138" width="116" height="12" rx="3" fill="#76A59C"/>
+  <rect x="235" y="157" width="34" height="10" rx="3" fill="#FFFFFF"/>
+
+  <!-- Bottom shelf storage boxes -->
+  <rect x="109" y="208" width="119" height="54" rx="5" fill="#D8B98A"/>
+  <rect x="105" y="203" width="127" height="12" rx="3" fill="#E9CDA4"/>
+  <rect x="150" y="225" width="37" height="12" rx="3" fill="#FFF8EB"/>
+
+  <rect x="243" y="220" width="65" height="42" rx="5" fill="#0F766E"/>
+  <rect x="239" y="215" width="73" height="12" rx="3" fill="#14978B"/>
+  <rect x="263" y="234" width="24" height="10" rx="3" fill="#FFFFFF"/>
+
+  <!-- Search symbol -->
+  <circle cx="346" cy="198" r="49" fill="#FFFFFF" stroke="#0F766E" stroke-width="4"/>
+  <circle cx="340" cy="192" r="20" fill="none" stroke="#0F766E" stroke-width="6"/>
+  <path d="M355 207 L372 224" stroke="#0F766E" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Success symbol -->
+  <circle cx="405" cy="117" r="21" fill="#0F766E"/>
+  <path d="M396 117 L403 124 L415 110" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

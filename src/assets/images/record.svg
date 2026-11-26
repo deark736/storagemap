@@ -1,0 +1,9 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Record storage locations</title>
+  <g fill="none" stroke="#0F766E" stroke-width="3.5"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M48 26 C48 39 32 52 32 52 S16 39 16 26 A16 16 0 1 1 48 26 Z"/>
+    <circle cx="32" cy="26" r="6"/>
+  </g>
+</svg>

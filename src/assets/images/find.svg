@@ -1,0 +1,9 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Find stored items</title>
+  <g fill="none" stroke="#0F766E" stroke-width="4"
+     stroke-linecap="round">
+    <circle cx="27" cy="27" r="15"/>
+    <path d="M38 38 L52 52"/>
+  </g>
+</svg>
