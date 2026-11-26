@@ -41,6 +41,7 @@ async function withItemApi(run) {
     ).run('Tools').lastInsertRowid;
 
     await run({
+      db,
       request,
       garageId,
       kitchenId,
@@ -270,6 +271,40 @@ test('item API rejects invalid location filters combined with search', async () 
     );
 
     assert.equal(validResponse.status, 200);
+  });
+});
+
+test('item API location filter includes descendant locations', async () => {
+  await withItemApi(async ({ db, request }) => {
+    const roomId = db.prepare(
+      'INSERT INTO locations (name) VALUES (?)'
+    ).run('Room').lastInsertRowid;
+    const drawerId = db.prepare(
+      'INSERT INTO locations (name, parent_id) VALUES (?, ?)'
+    ).run('Drawer', roomId).lastInsertRowid;
+
+    await request('/', 'POST', {
+      name: 'Watch',
+      locationId: drawerId
+    });
+    await request('/', 'POST', {
+      name: 'Remote',
+      locationId: roomId
+    });
+
+    const roomSearch = await request(`/?locationId=${roomId}`);
+    assert.equal(roomSearch.status, 200);
+    assert.deepEqual(
+      (await roomSearch.json()).map(item => item.name),
+      ['Watch', 'Remote']
+    );
+
+    const drawerSearch = await request(`/?locationId=${drawerId}`);
+    assert.equal(drawerSearch.status, 200);
+    assert.deepEqual(
+      (await drawerSearch.json()).map(item => item.name),
+      ['Watch']
+    );
   });
 });
 

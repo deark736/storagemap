@@ -1,10 +1,12 @@
 import * as api from '../api/locations';
 import * as itemsApi from '../api/items';
 import React, { useState } from 'react';
+import ItemSearchBar from './ItemSearchBar';
+import LocationFilter from './LocationFilter';
 
 function findLocation(locations, locationId) {
   for (const location of locations) {
-    if (location.id === locationId) {
+    if (String(location.id) === String(locationId)) {
       return location;
     }
 
@@ -20,7 +22,7 @@ function findLocation(locations, locationId) {
 function findLocationPath(locations, locationId, path = []) {
   for (const location of locations) {
     const currentPath = [...path, location];
-    if (location.id === locationId) {
+    if (String(location.id) === String(locationId)) {
       return currentPath;
     }
 
@@ -57,7 +59,6 @@ function collectLocationIds(location) {
 function InventoryView({ inventory, refreshLocations }) {
   const [actionError, setActionError] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [highlightedItemId, setHighlightedItemId] = useState(null);
   const [showAllItems, setShowAllItems] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -71,6 +72,7 @@ function InventoryView({ inventory, refreshLocations }) {
   const [movingItemId, setMovingItemId] = useState(null);
   const [movingLocation, setMovingLocation] = useState(false);
   const [targetLocationId, setTargetLocationId] = useState('');
+  const [filterLocationId, setFilterLocationId] = useState('');
 
   const selectedLocation = selectedLocationId === null
     ? null
@@ -79,15 +81,18 @@ function InventoryView({ inventory, refreshLocations }) {
     ? null
     : findLocationPath(inventory, selectedLocationId);
   const locations = flattenLocations(inventory);
-  const normalizedSearch = searchQuery.trim().toLowerCase();
-  const searchResults = normalizedSearch
-    ? flattenItems(inventory).filter(({ item }) => (
-      item.name.toLowerCase().includes(normalizedSearch)
-    ))
-    : [];
   const allItems = flattenItems(inventory).sort((a, b) => (
     a.item.name.localeCompare(b.item.name, undefined, { sensitivity: 'base' })
   ));
+  const filterLocation = filterLocationId
+    ? findLocation(inventory, filterLocationId)
+    : null;
+  const branchLocationIds = filterLocation
+    ? collectLocationIds(filterLocation).map(String)
+    : [];
+  const filteredItems = filterLocationId
+    ? allItems.filter(({ location }) => branchLocationIds.includes(String(location.id)))
+    : allItems;
   const moveableLocations = selectedLocation
     ? locations.filter(({ location }) => (
       !collectLocationIds(selectedLocation).includes(location.id)
@@ -240,52 +245,15 @@ function InventoryView({ inventory, refreshLocations }) {
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <h2>StorageMap</h2>
         <p>Know all the locations.</p>
-        <div style={{ width: '60%', margin: '0 auto', textAlign: 'left' }}>
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={event => setSearchQuery(event.target.value)}
-            placeholder="Search for an item..."
-            aria-label="Search for an item"
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-          />
-          {normalizedSearch && (
-            <div
-              role="list"
-              aria-label="Search results"
-              style={{ background: '#fff', border: '1px solid #ccc', borderTop: 0 }}
-            >
-              {searchResults.length > 0 ? searchResults.map(({ item, location, path }) => (
-                <button
-                  type="button"
-                  role="listitem"
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedLocationId(location.id);
-                    setHighlightedItemId(item.id);
-                  }}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '8px',
-                    textAlign: 'left',
-                    border: 0,
-                    borderBottom: '1px solid #eee',
-                    background: 'white',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <strong>{item.name}</strong>
-                  <span style={{ display: 'block', color: '#666', fontSize: '12px' }}>
-                    {path.map(part => part.name).join(' > ')}
-                  </span>
-                </button>
-              )) : (
-                <p style={{ margin: 0, padding: '8px', color: '#666' }}>No matching items found.</p>
-              )}
-            </div>
-          )}
-        </div>
+        <ItemSearchBar
+          inventory={inventory}
+          locationId={filterLocationId || null}
+          onSelectResult={(locationId, itemId) => {
+            setSelectedLocationId(locationId);
+            setHighlightedItemId(itemId);
+            setShowAllItems(false);
+          }}
+        />
       </div>
       <div style={{ minHeight: '24px', marginBottom: '10px' }}>
         {actionError && <p role="alert" style={{ color: '#b00020', margin: 0 }}>{actionError}</p>}
@@ -328,9 +296,14 @@ function InventoryView({ inventory, refreshLocations }) {
           {showAllItems ? (
             <section aria-label="All items">
               <h3>All Items</h3>
-              {allItems.length > 0 ? (
+              <LocationFilter
+                locations={locations}
+                value={filterLocationId}
+                onChange={setFilterLocationId}
+              />
+              {filteredItems.length > 0 ? (
                 <ol>
-                  {allItems.map(({ item, location, path }) => (
+                  {filteredItems.map(({ item, location, path }) => (
                     <li key={item.id} style={{ marginBottom: '8px' }}>
                       <button
                         type="button"
@@ -350,7 +323,7 @@ function InventoryView({ inventory, refreshLocations }) {
                   ))}
                 </ol>
               ) : (
-                <p style={{ color: '#666', fontStyle: 'italic' }}>No items have been added yet.</p>
+                <p style={{ color: '#666', fontStyle: 'italic' }}>No items match the selected location.</p>
               )}
             </section>
           ) : selectedLocation ? (

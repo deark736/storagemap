@@ -252,6 +252,23 @@ test('displays all items alphabetically and opens an item location when selected
     .toEqual(['book', 'Hammer', 'Watch']);
   expect(listedItems[2]).toHaveTextContent('Room 1 > Shelf 1');
 
+  fireEvent.change(screen.getByLabelText('Filter items by location'), {
+    target: { value: 'room' }
+  });
+  expect(screen.getByRole('button', { name: 'Watch' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'book' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Hammer' })).not.toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText('Filter items by location'), {
+    target: { value: 'garage' }
+  });
+  const filteredItems = screen.getAllByRole('button', { name: 'Hammer' });
+  expect(filteredItems).toHaveLength(1);
+  expect(screen.queryByRole('button', { name: 'Watch' })).not.toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText('Filter items by location'), {
+    target: { value: '' }
+  });
   fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
   expect(screen.getByRole('heading', { name: 'Shelf 1' })).toBeInTheDocument();
   expect(screen.getByText('Watch')).toBeInTheDocument();
