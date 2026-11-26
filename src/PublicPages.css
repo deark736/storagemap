@@ -1,0 +1,539 @@
+
+/* ========================================
+   Public page design tokens
+   ======================================== */
+
+:root {
+  --public-primary: #0f766e;
+  --public-primary-hover: #115e59;
+  --public-heading: #0f172a;
+  --public-text: #475569;
+  --public-background: #f8fafc;
+  --public-accent: #e2f1ed;
+  --public-white: #ffffff;
+  --public-border: #e2e8f0;
+  --public-radius: 16px;
+  --public-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+/* ========================================
+   Shared buttons
+   ======================================== */
+
+.public-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.public-button-primary {
+  background-color: var(--public-primary);
+  color: var(--public-white);
+}
+
+.public-button-primary:hover {
+  background-color: var(--public-primary-hover);
+}
+
+.public-button-secondary {
+  background-color: var(--public-white);
+  color: var(--public-primary);
+  border-color: var(--public-primary);
+}
+
+.public-button-secondary:hover {
+  background-color: var(--public-accent);
+}
+
+.public-button:focus-visible,
+.public-brand:focus-visible,
+.public-nav-link:focus-visible,
+.public-menu-toggle:focus-visible {
+  outline: 3px solid var(--public-primary);
+  outline-offset: 4px;
+}
+
+/* ========================================
+   Navigation header
+   ======================================== */
+
+.public-header {
+  background-color: var(--public-white);
+  border-bottom: 1px solid var(--public-border);
+}
+
+.public-navbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.public-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--public-heading);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.public-brand img {
+  width: 36px;
+  height: 36px;
+}
+
+.public-navigation,
+.public-nav-links,
+.public-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.public-navigation {
+  gap: 32px;
+}
+
+.public-nav-link {
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+  color: var(--public-text);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.public-nav-link:hover,
+.public-nav-link.is-active {
+  color: var(--public-primary);
+}
+
+.public-nav-link.is-active {
+  box-shadow: 0 2px 0 var(--public-primary);
+}
+
+.public-user-greeting {
+  color: var(--public-text);
+  font-size: 14px;
+}
+
+.public-menu-toggle {
+  display: none;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--public-heading);
+  cursor: pointer;
+}
+
+/* ========================================
+   Homepage
+   ======================================== */
+
+.home-view {
+  color: var(--public-text);
+}
+
+.home-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 48px;
+  padding: 56px 0;
+}
+
+.home-hero-visual {
+  min-width: 0;
+}
+
+.home-hero-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.home-eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: var(--public-primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.home-hero-content h1 {
+  margin: 0 0 20px;
+  color: var(--public-heading);
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+}
+
+.home-hero-content p {
+  margin: 0 0 28px;
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ========================================
+   Homepage feature cards
+   ======================================== */
+
+.home-features {
+  padding: 40px 0 64px;
+  text-align: center;
+}
+
+.home-features h2 {
+  margin: 0 0 12px;
+  color: var(--public-heading);
+  font-size: 30px;
+}
+
+.home-section-description {
+  margin: 0 0 32px;
+  line-height: 1.6;
+}
+
+.home-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.home-feature-card {
+  padding: 32px 24px;
+  background-color: var(--public-white);
+  border: 1px solid var(--public-border);
+  border-radius: var(--public-radius);
+  box-shadow: var(--public-shadow);
+}
+
+.home-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background-color: var(--public-accent);
+}
+
+.home-feature-icon img {
+  width: 44px;
+  height: 44px;
+}
+
+.home-feature-card h3 {
+  margin: 0 0 12px;
+  color: var(--public-heading);
+  font-size: 20px;
+}
+
+.home-feature-card p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+/* ========================================
+   Help page
+   ======================================== */
+
+.help-view {
+  color: var(--public-text);
+}
+
+.help-intro {
+  padding: 48px 0 32px;
+  text-align: center;
+}
+
+.help-intro h1 {
+  margin: 0 0 16px;
+  color: var(--public-heading);
+  font-size: clamp(30px, 4vw, 42px);
+}
+
+.help-intro p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.help-steps {
+  display: grid;
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.help-step {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 28px;
+  background-color: var(--public-white);
+  border: 1px solid var(--public-border);
+  border-radius: var(--public-radius);
+  box-shadow: var(--public-shadow);
+}
+
+.help-step-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border-radius: 14px;
+  background-color: var(--public-accent);
+}
+
+.help-step-visual img {
+  width: 52px;
+  height: 52px;
+}
+
+.help-step-number {
+  color: var(--public-primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.help-step-content h2 {
+  margin: 8px 0 12px;
+  color: var(--public-heading);
+  font-size: 22px;
+}
+
+.help-step-content p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.help-cta {
+  margin: 48px 0;
+  padding: 36px 24px;
+  background-color: var(--public-accent);
+  border-radius: var(--public-radius);
+  text-align: center;
+}
+
+.help-cta h2 {
+  margin: 0 0 12px;
+  color: var(--public-heading);
+}
+
+.help-cta p {
+  margin: 0 0 24px;
+}
+
+/* ========================================
+   Footer
+   ======================================== */
+
+.public-footer {
+  background-color: var(--public-white);
+  border-top: 1px solid var(--public-border);
+  color: var(--public-text);
+}
+
+.public-footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.public-footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+}
+
+.public-footer-brand {
+  color: var(--public-heading);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.public-footer-tagline {
+  margin: 0;
+}
+
+.public-footer-bottom {
+  padding-top: 16px;
+  border-top: 1px solid var(--public-border);
+  text-align: center;
+  font-size: 13px;
+}
+
+.public-footer-bottom p {
+  margin: 0;
+}
+
+/* ========================================
+   Public page layout
+   ======================================== */
+
+.public-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.public-main {
+  flex: 1;
+  background-color: var(--public-background);
+}
+
+.public-main-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+
+/* ========================================
+   Responsive navigation and pages
+   ======================================== */
+
+@media (max-width: 768px) {
+  .public-navbar {
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 20px;
+  }
+
+  .public-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .public-navigation {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--public-border);
+  }
+
+  .public-navigation.is-open {
+    display: flex;
+  }
+
+  .public-nav-links,
+  .public-nav-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .public-nav-link {
+    padding: 10px;
+    text-align: left;
+  }
+
+  .public-nav-link.is-active {
+    background-color: var(--public-accent);
+    border-radius: 6px;
+    box-shadow: none;
+  }
+
+  .home-hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px 0 40px;
+  }
+
+  .home-hero-visual {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .home-hero-content {
+    text-align: center;
+  }
+
+  .home-hero-actions {
+    justify-content: center;
+  }
+
+  .home-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-features {
+    padding: 24px 0 40px;
+  }
+
+  .help-step {
+    gap: 20px;
+    padding: 24px;
+  }
+
+  .public-footer-top {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-main-inner {
+    padding: 16px;
+  }
+
+  .home-hero-actions {
+    flex-direction: column;
+  }
+
+  .help-step {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .help-intro {
+    padding-top: 24px;
+  }
+
+  .help-cta {
+    margin: 32px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-button {
+    transition: none;
+  }
+}

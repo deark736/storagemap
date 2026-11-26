@@ -1,0 +1,11 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Organize belongings</title>
+  <g fill="none" stroke="#0F766E" stroke-width="3"
+     stroke-linecap="round" stroke-linejoin="round">
+    <rect x="21" y="10" width="22" height="20" rx="2"/>
+    <rect x="8" y="34" width="22" height="20" rx="2"/>
+    <rect x="34" y="34" width="22" height="20" rx="2"/>
+    <path d="M28 17 H36 M15 41 H23 M41 41 H49"/>
+  </g>
+</svg>
