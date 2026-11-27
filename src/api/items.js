@@ -42,3 +42,13 @@ export async function deleteItem(id) {
     const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error(await readError(res));
 }
+
+export async function searchItems(query, locationId = null) {
+    const params = new URLSearchParams({ search: query });
+    if (locationId !== null) {
+        params.set('locationId', String(locationId));
+    }
+    const res = await fetch(`${BASE}?${params.toString()}`);
+    if (!res.ok) throw new Error(await readError(res));
+    return res.json();
+}

@@ -53,7 +53,16 @@ function createItemRouter(db) {
         });
       }
 
-      conditions.push('location_id = ?');
+      conditions.push(`location_id IN (
+        WITH RECURSIVE location_branch(id) AS (
+          SELECT ?
+          UNION ALL
+          SELECT locations.id
+          FROM locations
+          JOIN location_branch ON locations.parent_id = location_branch.id
+        )
+        SELECT id FROM location_branch
+      )`);
       params.push(id);
     }
 
